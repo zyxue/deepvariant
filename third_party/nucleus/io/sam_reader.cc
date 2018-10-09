@@ -445,11 +445,15 @@ tf::Status ConvertToPb(const bam_hdr_t* h, const bam1_t* b,
   // Set the mates map position if the mate is not unmapped.
   if (paired && !(c->flag & BAM_FMUNMAP)) {
     Position* mate_position = read_message->mutable_next_mate_position();
-    if (c->mtid < 0)
+    if (c->mtid < -1)
       return tf::errors::DataLoss(
           "Expected mtid >= 0 as mate is supposedly mapped: ",
           read_message->ShortDebugString());
-    mate_position->set_reference_name(h->target_name[c->mtid]);
+    else if (c->mtid == -1) {
+      mate_position->set_reference_name("*");
+    } else {
+      mate_position->set_reference_name(h->target_name[c->mtid]);
+    }
     mate_position->set_position(c->mpos);
     mate_position->set_reverse_strand(bam_is_mrev(b));
   }
